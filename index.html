@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Facts Practice</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+
+        #question {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        #answer {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        #timer {
+            font-size: 18px;
+            color: red;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        #result {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        #history {
+            font-size: 18px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="question"></div>
+<input type="text" id="answer" placeholder="Your answer" oninput="checkAnswer()" autofocus>
+<div id="timer">Time left: <span id="time">30</span> seconds</div>
+<div id="result"></div>
+<div id="history"></div>
+
+<script>
+    let mathFacts = [
+        { question: "5 x 12", answer: 60 },
+        { question: "7 x 12", answer: 84 },
+        { question: "8 x 12", answer: 96 },
+        { question: "9 x 12", answer: 108 },
+        { question: "11 x 12", answer: 132 },
+        { question: "13 x 8", answer: 104 },
+        { question: "13 x 9", answer: 117 },
+        { question: "14 x 4", answer: 56 },
+        { question: "14 x 3", answer: 42 },
+        { question: "14 x 5", answer: 70 },
+        { question: "14 x 6", answer: 84 },
+        { question: "14 x 7", answer: 98 },
+        { question: "14 x 8", answer: 112 },
+        { question: "14 x 9", answer: 126 }
+    ];
+
+    let currentQuestionIndex = 0;
+    let correctAnswers = 0;
+    let timerStarted = false;
+
+    // Function to shuffle an array
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // Shuffle the math facts before starting the drill
+    shuffleArray(mathFacts);
+
+    function displayQuestion() {
+        document.getElementById('question').innerText = mathFacts[currentQuestionIndex].question;
+        document.getElementById('answer').value = '';
+    }
+
+    function startTimer() {
+        let timeLeft = 30;
+        const timer = setInterval(() => {
+            timeLeft--;
+            document.getElementById('time').innerText = timeLeft;
+
+            if (timeLeft === 0) {
+                clearInterval(timer);
+                endDrill();
+            }
+        }, 1000);
+    }
+
+    function checkAnswer() {
+        const userAnswer = parseInt(document.getElementById('answer').value);
+        const resultElement = document.getElementById('result');
+
+        if (!timerStarted) {
+            // Start the timer when the user enters the first answer
+            timerStarted = true;
+            document.getElementById('timer').style.display = 'block';
+            startTimer();
+        }
+
+        if (userAnswer === mathFacts[currentQuestionIndex].answer) {
+            // If the answer is correct, move on to the next question
+            correctAnswers++;
+            currentQuestionIndex++;
+            resultElement.style.display = 'none';
+            if (currentQuestionIndex < mathFacts.length) {
+                displayQuestion();
+            } else {
+                endDrill();
+            }
+        } else {
+            // If the answer is incorrect, display "Try again" message
+            resultElement.innerText = 'Try again.';
+            resultElement.style.display = 'block';
+        }
+    }
+
+    function endDrill() {
+        const resultElement = document.getElementById('result');
+        resultElement.innerText = `Your grade: ${((correctAnswers / mathFacts.length) * 100).toFixed(2)}%`;
+        resultElement.style.display = 'block';
+
+        // Send the daily grade to the server
+        const studentName = prompt("Enter your name:"); // Prompt for the student's name
+        const dailyGrade = ((correctAnswers / mathFacts.length) * 100).toFixed(2);
+
+        fetch('store_grade.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                studentName: studentName,
+                grade: dailyGrade,
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Grade stored successfully.');
+            } else {
+                console.error('Failed to store grade:', data.error);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+
+        document.getElementById('question').innerText = 'Drill ended!';
+        document.getElementById('answer').style.display = 'none';
+        document.getElementById('timer').style.display = 'none';
+    }
+
+    // Initial setup
+    displayQuestion();
+</script>
+
+</body>
+</html>
