@@ -130,33 +130,23 @@
 
     function endDrill() {
         const resultElement = document.getElementById('result');
-        resultElement.innerText = `Your grade: ${((correctAnswers / mathFacts.length) * 100).toFixed(2)}%`;
+        const currentDate = new Date().toLocaleString(); // Get the current date and time
+        resultElement.innerText = `Your grade: ${((correctAnswers / mathFacts.length) * 100).toFixed(2)}% on ${currentDate}`;
         resultElement.style.display = 'block';
 
-        // Send the daily grade to the server
-        const studentName = prompt("Enter your name:"); // Prompt for the student's name
-        const dailyGrade = ((correctAnswers / mathFacts.length) * 100).toFixed(2);
+        // Prompt for the student's name
+        const studentName = prompt("Enter your name:");
 
-        fetch('store_grade.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                studentName: studentName,
-                grade: dailyGrade,
-            }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('Grade stored successfully.');
-            } else {
-                console.error('Failed to store grade:', data.error);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
+        // Save the user's score, name, and date to local storage
+        const userScores = JSON.parse(localStorage.getItem('userScores')) || [];
+        userScores.push({ name: studentName, score: ((correctAnswers / mathFacts.length) * 100).toFixed(2), date: currentDate });
+        localStorage.setItem('userScores', JSON.stringify(userScores));
+
+        // Display user scores on the webpage
+        const historyElement = document.getElementById('history');
+        historyElement.innerHTML = '<h2>User Scores:</h2>';
+        userScores.forEach(user => {
+            historyElement.innerHTML += `<p>${user.name}: ${user.score}% - ${user.date}</p>`;
         });
 
         document.getElementById('question').innerText = 'Drill ended!';
