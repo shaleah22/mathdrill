@@ -35,9 +35,12 @@
             display: none;
         }
 
-        #history {
+        .level-button {
             font-size: 18px;
-            margin-top: 20px;
+            padding: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+            display: none;
         }
     </style>
 </head>
@@ -45,13 +48,12 @@
 
 <div id="question"></div>
 <input type="text" id="answer" placeholder="Your answer" oninput="checkAnswer()" autofocus>
-<div id="timer">Time left: <span id="time">30</span> seconds</div>
+<div id="timer">Time left: <span id="time">60</span> seconds</div>
 <div id="result"></div>
-<div id="history"></div>
+<button id="levelButton" class="level-button" onclick="nextLevel()">Congratulations. Click here to move to level <span id="level"></span></button>
 
 <script>
     let mathFacts = [
-        { question: "5 x 12", answer: 60 },
         { question: "7 x 12", answer: 84 },
         { question: "8 x 12", answer: 96 },
         { question: "9 x 12", answer: 108 },
@@ -59,17 +61,20 @@
         { question: "13 x 8", answer: 104 },
         { question: "13 x 9", answer: 117 },
         { question: "14 x 4", answer: 56 },
-        { question: "14 x 3", answer: 42 },
         { question: "14 x 5", answer: 70 },
         { question: "14 x 6", answer: 84 },
         { question: "14 x 7", answer: 98 },
         { question: "14 x 8", answer: 112 },
-        { question: "14 x 9", answer: 126 }
+        { question: "14 x 9", answer: 126 },
+        { question: "15 x 5", answer: 75 },
+        { question: "15 x 7", answer: 105 },
     ];
 
     let currentQuestionIndex = 0;
     let correctAnswers = 0;
     let timerStarted = false;
+    let timer;
+    let level = parseInt(localStorage.getItem('level')) || 1;
 
     // Function to shuffle an array
     function shuffleArray(array) {
@@ -88,8 +93,9 @@
     }
 
     function startTimer() {
-        let timeLeft = 30;
-        const timer = setInterval(() => {
+        let timeLeft = 60;
+        document.getElementById('time').innerText = timeLeft;
+        timer = setInterval(() => {
             timeLeft--;
             document.getElementById('time').innerText = timeLeft;
 
@@ -130,28 +136,48 @@
 
     function endDrill() {
         const resultElement = document.getElementById('result');
-        const currentDate = new Date().toLocaleString(); // Get the current date and time
-        resultElement.innerText = `Your grade: ${((correctAnswers / mathFacts.length) * 100).toFixed(2)}% on ${currentDate}`;
+        resultElement.innerText = `Your grade: ${((correctAnswers / mathFacts.length) * 100).toFixed(2)}%`;
         resultElement.style.display = 'block';
 
-        // Prompt for the student's name
-        const studentName = prompt("Enter your name:");
+        // Display the level button
+        document.getElementById('levelButton').innerText = `Congratulations. Click here to move to level ${level}`;
+        document.getElementById('levelButton').style.display = 'block';
 
-        // Save the user's score, name, and date to local storage
-        const userScores = JSON.parse(localStorage.getItem('userScores')) || [];
-        userScores.push({ name: studentName, score: ((correctAnswers / mathFacts.length) * 100).toFixed(2), date: currentDate });
-        localStorage.setItem('userScores', JSON.stringify(userScores));
+        // Save the current level to local storage
+        localStorage.setItem('level', level);
 
-        // Display user scores on the webpage
-        const historyElement = document.getElementById('history');
-        historyElement.innerHTML = '<h2>User Scores:</h2>';
-        userScores.forEach(user => {
-            historyElement.innerHTML += `<p>${user.name}: ${user.score}% - ${user.date}</p>`;
-        });
+        // Clear the timer
+        clearInterval(timer);
+    }
 
-        document.getElementById('question').innerText = 'Drill ended!';
-        document.getElementById('answer').style.display = 'none';
-        document.getElementById('timer').style.display = 'none';
+    function nextLevel() {
+        // Increment the level and reset variables for the next level
+        level++;
+        currentQuestionIndex = 0;
+        correctAnswers = 0;
+        timerStarted = false;
+
+        // Stop the timer
+        clearInterval(timer);
+
+        // Add a new "16" fact and delete an old fact
+        mathFacts.push({ question: `16 x ${level}`, answer: 16 * level });
+        mathFacts.shift();
+
+        // Shuffle the math facts for the next level
+        shuffleArray(mathFacts);
+
+        // Display the first question of the next level
+        displayQuestion();
+
+        // Hide the level button
+        document.getElementById('levelButton').style.display = 'none';
+
+        // Reset the timer
+        document.getElementById('time').innerText = '60';
+
+        // Start the timer for the next level
+        startTimer();
     }
 
     // Initial setup
