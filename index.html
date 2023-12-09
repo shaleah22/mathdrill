@@ -154,7 +154,6 @@
         timerStarted = false;
         clearInterval(timer);
         document.getElementById('time').innerText = '40';
-
         mathFacts.push(newFacts[newFactIndex]);
         mathFacts.shift();
         newFactIndex = (newFactIndex + 1) % newFacts.length;
@@ -164,6 +163,13 @@
         document.getElementById('level').innerText = level + 1;
         document.getElementById('levelButton').style.display = 'none';
     }
+
+    // Add event listener to the answer input for the Enter key
+    document.getElementById('answer').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter' && document.getElementById('levelButton').style.display !== 'none') {
+            nextLevel();
+        }
+    });
 
     shuffleArray(mathFacts);
     displayQuestion();
