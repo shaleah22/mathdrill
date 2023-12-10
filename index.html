@@ -53,7 +53,7 @@
 <button id="levelButton" class="level-button" onclick="nextLevel()">Congratulations. Click here to move to level <span id="level">2</span></button>
 
 <script>
-    let mathFacts = [
+    let initialMathFacts = [
         { question: "7 x 12", answer: 84 },
         { question: "8 x 12", answer: 96 },
         { question: "9 x 12", answer: 108 },
@@ -79,12 +79,13 @@
         { question: "18 x 3", answer: 54 }
     ];
 
-    let currentQuestionIndex = 0;
+    let mathFacts = JSON.parse(localStorage.getItem('mathFacts')) || initialMathFacts;
+    let currentQuestionIndex = JSON.parse(localStorage.getItem('currentQuestionIndex')) || 0;
     let correctAnswers = 0;
     let timerStarted = false;
     let timer;
     let level = parseInt(localStorage.getItem('level')) || 1;
-    let newFactIndex = 0;
+    let newFactIndex = parseInt(localStorage.getItem('newFactIndex')) || 0;
 
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -124,9 +125,8 @@
 
         if (userAnswer === mathFacts[currentQuestionIndex].answer) {
             correctAnswers++;
-            currentQuestionIndex++;
-            resultElement.style.display = 'none';
-            if (currentQuestionIndex < mathFacts.length) {
+            if (currentQuestionIndex < mathFacts.length - 1) {
+                currentQuestionIndex++;
                 displayQuestion();
             } else {
                 endDrill();
@@ -139,10 +139,16 @@
 
     function endDrill() {
         const resultElement = document.getElementById('result');
-        resultElement.innerText = `Your grade: ${((correctAnswers / mathFacts.length) * 100).toFixed(2)}%`;
+        const score = (correctAnswers / mathFacts.length) * 100;
+        resultElement.innerText = `Your grade: ${score.toFixed(2)}%`;
         resultElement.style.display = 'block';
-        document.getElementById('levelButton').style.display = 'block';
-        document.getElementById('level').innerText = level + 1;
+
+        // Only show the level-up button if the user scored 100%
+        if (score === 100) {
+            document.getElementById('levelButton').style.display = 'block';
+            document.getElementById('level').innerText = level + 1;
+        }
+
         localStorage.setItem('level', level);
         clearInterval(timer);
     }
@@ -158,6 +164,10 @@
         mathFacts.shift();
         newFactIndex = (newFactIndex + 1) % newFacts.length;
 
+        localStorage.setItem('mathFacts', JSON.stringify(mathFacts));
+        localStorage.setItem('newFactIndex', newFactIndex);
+        localStorage.setItem('level', level);
+
         shuffleArray(mathFacts);
         displayQuestion();
         document.getElementById('level').innerText = level + 1;
@@ -165,7 +175,7 @@
     }
 
     // Add event listener to the answer input for the Enter key
-    document.getElementById('answer').addEventListener('keypress', function(event) {
+    document.getElementById('answer').addEventListener('keyup', function(event) {
         if (event.key === 'Enter' && document.getElementById('levelButton').style.display !== 'none') {
             nextLevel();
         }
